@@ -1,5 +1,5 @@
 import { CrossmintEmbeddedCheckout, useCrossmintCheckout } from "@crossmint/client-sdk-react-ui";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AmountBreakdown } from "./AmountBreakdown";
 import { cn } from "@/lib/utils";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
@@ -7,86 +7,6 @@ import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 const USDC_MINT = process.env.NEXT_PUBLIC_USDC_MINT;
 const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN_ID;
 const USDC_LOCATOR = `${CHAIN_ID}:${USDC_MINT}${CHAIN_ID === "solana" ? "" : `:${USDC_MINT}`}`;
-
-// Get CSS variables
-const primaryColor =
-  typeof window !== "undefined"
-    ? window.getComputedStyle(document.documentElement).getPropertyValue("--primary").trim()
-    : "#000000"; // fallback color
-const primaryHoverColor =
-  typeof window !== "undefined"
-    ? window.getComputedStyle(document.documentElement).getPropertyValue("--primary-hover").trim()
-    : "#333333"; // fallback color
-
-const CHECKOUT_APPEARANCE = {
-  rules: {
-    Label: {
-      font: {
-        family: "Inter, sans-serif",
-        size: "14px",
-        weight: "500",
-      },
-      colors: {
-        text: "#374151",
-      },
-    },
-    Input: {
-      borderRadius: "8px",
-      font: {
-        family: "Inter, sans-serif",
-        size: "16px",
-        weight: "400",
-      },
-      colors: {
-        text: "#000000",
-        background: "#FFFFFF",
-        border: "#E0E0E0",
-        boxShadow: "none",
-        placeholder: "#999999",
-      },
-      hover: {
-        colors: {
-          border: "#0074D9",
-        },
-      },
-      focus: {
-        colors: {
-          border: "#0074D9",
-          boxShadow: "none",
-        },
-      },
-    },
-    PrimaryButton: {
-      font: {
-        family: "Inter, sans-serif",
-      },
-      colors: {
-        background: primaryColor,
-      },
-      hover: {
-        colors: {
-          background: primaryHoverColor,
-        },
-      },
-      disabled: {
-        colors: {
-          background: "#F1F5F9",
-        },
-      },
-    },
-    DestinationInput: {
-      display: "hidden",
-    },
-    ReceiptEmailInput: {
-      display: "hidden",
-    },
-  },
-  variables: {
-    colors: {
-      accent: primaryColor,
-    },
-  },
-} as const;
 
 type CheckoutProps = {
   amount: string;
@@ -110,7 +30,87 @@ export function Checkout({
   goBack,
 }: CheckoutProps) {
   const { order } = useCrossmintCheckout();
+  const [checkoutAppearance, setCheckoutAppearance] = useState<any>(null);
+
   console.log("order", order);
+
+  useEffect(() => {
+    // Get CSS variables on client side only
+    const primaryColor = window.getComputedStyle(document.documentElement).getPropertyValue("--primary").trim() || "#000000";
+    const primaryHoverColor = window.getComputedStyle(document.documentElement).getPropertyValue("--primary-hover").trim() || "#333333";
+
+    const appearance = {
+      rules: {
+        Label: {
+          font: {
+            family: "Inter, sans-serif",
+            size: "14px",
+            weight: "500",
+          },
+          colors: {
+            text: "#374151",
+          },
+        },
+        Input: {
+          borderRadius: "8px",
+          font: {
+            family: "Inter, sans-serif",
+            size: "16px",
+            weight: "400",
+          },
+          colors: {
+            text: "#000000",
+            background: "#FFFFFF",
+            border: "#E0E0E0",
+            boxShadow: "none",
+            placeholder: "#999999",
+          },
+          hover: {
+            colors: {
+              border: "#0074D9",
+            },
+          },
+          focus: {
+            colors: {
+              border: "#0074D9",
+              boxShadow: "none",
+            },
+          },
+        },
+        PrimaryButton: {
+          font: {
+            family: "Inter, sans-serif",
+          },
+          colors: {
+            background: primaryColor,
+          },
+          hover: {
+            colors: {
+              background: primaryHoverColor,
+            },
+          },
+          disabled: {
+            colors: {
+              background: "#F1F5F9",
+            },
+          },
+        },
+        DestinationInput: {
+          display: "hidden",
+        },
+        ReceiptEmailInput: {
+          display: "hidden",
+        },
+      },
+      variables: {
+        colors: {
+          accent: primaryColor,
+        },
+      },
+    } as const;
+
+    setCheckoutAppearance(appearance);
+  }, []);
 
   useEffect(() => {
     if (order?.phase === "completed") {
@@ -138,7 +138,7 @@ export function Checkout({
           isAmountValid={isAmountValid}
         />
       )}
-      {amount && isAmountValid && (
+      {amount && isAmountValid && checkoutAppearance && (
         <div
           className={cn(
             requiresKYC &&
@@ -173,7 +173,7 @@ export function Checkout({
                 },
                 receiptEmail,
               }}
-              appearance={CHECKOUT_APPEARANCE}
+              appearance={checkoutAppearance}
             />
           </div>
         </div>
